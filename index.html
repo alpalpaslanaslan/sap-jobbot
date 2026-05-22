@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP JobBot</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#080d1a; color:#dde4f0; font-family:'Segoe UI',sans-serif; font-size:14px; }
+  header { background:#0a1020; border-bottom:1px solid #1a2640; position:sticky; top:0; z-index:50; }
+  .hinner { max-width:980px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .logo { font-weight:800; font-size:18px; }
+  .logo span { color:#00d4aa; }
+  nav { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .navbtn { background:transparent; border:1px solid #1a2640; border-radius:8px; color:#6a7a9a; padding:7px 13px; cursor:pointer; font-size:13px; font-weight:500; }
+  .navbtn.active { background:#00d4aa18; border-color:#00d4aa66; color:#00d4aa; }
+  .badge { background:#00d4aa; color:#080d1a; border-radius:20px; padding:2px 8px; font-size:11px; font-weight:700; margin-left:4px; }
+  .status-online { font-size:11px; padding:4px 10px; border-radius:20px; background:#0e2e22; color:#00d4aa; border:1px solid #00d4aa44; }
+  .status-offline { font-size:11px; padding:4px 10px; border-radius:20px; background:#2e0e0e; color:#ff6655; border:1px solid #ff665544; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 80px; }
+  .card { background:#0d1526; border:1px solid #1a2640; border-radius:14px; padding:22px; margin-bottom:16px; }
+  h2 { font-size:20px; font-weight:800; margin-bottom:6px; }
+  .sub { color:#6a7a9a; margin-bottom:20px; line-height:1.6; }
+  .section-label { font-size:11px; font-weight:700; color:#5a6a8a; text-transform:uppercase; letter-spacing:0.09em; margin-bottom:10px; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:20px; }
+  .chip { padding:7px 13px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; border:1px solid #1e2a40; background:#060d1a; color:#7a8aaa; }
+  .chip.active { border-color:#00d4aa; background:#00d4aa18; color:#00d4aa; }
+  .chip.hot { border-color:#ff6b3544; background:#ff6b3508; color:#ff8855; }
+  .chip.hot.active { border-color:#a78bfa; background:#a78bfa18; color:#a78bfa; }
+  .chip.filter { border-color:#1e2a40; }
+  .chip.filter.active { border-color:#a78bfa; background:#a78bfa18; color:#a78bfa; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  select, textarea { background:#060d1a; border:1px solid #1a2640; border-radius:8px; color:#dde4f0; padding:10px 13px; font-size:14px; width:100%; font-family:inherit; }
+  .btn-primary { background:linear-gradient(135deg,#00d4aa,#00a884); border:none; border-radius:10px; color:#080d1a; padding:12px 22px; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; display:inline-block; }
+  .btn-ghost { background:transparent; border:1px solid #1a2640; border-radius:10px; color:#6a7a9a; padding:10px 18px; cursor:pointer; font-size:13px; text-decoration:none; display:inline-block; }
+  .spinner { width:40px; height:40px; border:3px solid #1a2640; border-top-color:#00d4aa; border-radius:50%; margin:0 auto; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .logbox { background:#060d1a; border:1px solid #1a2640; border-radius:10px; padding:14px; margin-top:18px; text-align:left; min-height:60px; }
+  .logline { color:#6a7a9a; font-size:13px; line-height:2; }
+  .jcard { background:#0d1526; border:1px solid #1a2640; border-radius:14px; padding:22px; margin-bottom:16px; cursor:default; }
+  .jcard:hover { border-color:#00d4aa44; }
+  .jmeta { font-size:11px; color:#3a4a6a; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .jtitle { font-size:16px; font-weight:800; margin-bottom:3px; }
+  .jco { color:#00d4aa; font-weight:600; font-size:14px; margin-bottom:5px; }
+  .jinfo { display:flex; gap:12px; color:#6a7a9a; font-size:13px; flex-wrap:wrap; }
+  .jdesc { color:#6a7a9a; font-size:13px; line-height:1.7; margin:12px 0 10px; }
+  .tag { background:#060d1a; border:1px solid #1a2640; border-radius:6px; font-size:11px; color:#6a7a9a; padding:3px 9px; }
+  .score-box { min-width:58px; text-align:center; border-radius:10px; padding:8px 10px; flex-shrink:0; }
+  .score-val { font-size:20px; font-weight:800; }
+  .score-lbl { font-size:10px; font-weight:600; opacity:0.8; }
+  .ap-btn { background:transparent; border:1px solid #1a2640; border-radius:8px; color:#6a7a9a; padding:8px 14px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; }
+  .ap-btn.done { background:#0e2e22; border-color:#00d4aa66; color:#00d4aa; }
+  .note-input { background:#060d1a; border:1px solid #1a2640; border-radius:8px; color:#dde4f0; padding:8px 12px; font-size:13px; width:100%; margin-bottom:12px; font-family:inherit; }
+  .dbadge { font-size:10px; border-radius:4px; padding:1px 6px; font-weight:700; }
+  .dbadge-green { background:#00d4aa18; border:1px solid #00d4aa44; color:#00d4aa; }
+  .dbadge-orange { background:#f59e0b18; border:1px solid #f59e0b44; color:#f59e0b; }
+  .dbadge-red { background:#ff885518; border:1px solid #ff885544; color:#ff8855; }
+  .salary { color:#ffd700; font-weight:600; }
+  pre { padding:20px; font-size:12.5px; color:#c0ceea; line-height:1.85; margin:0; white-space:pre-wrap; word-break:break-word; font-family:monospace; }
+  .hidden { display:none !important; }
+  @media(max-width:600px) { .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hinner">
+    <div class="logo"><span>◈</span> SAP <span>JobBot</span></div>
+    <nav>
+      <button class="navbtn active" onclick="showTab('search')">🔍 Ara</button>
+      <button class="navbtn" onclick="showTab('results')" id="results-btn">📋 İlanlar</button>
+      <button class="navbtn" onclick="showTab('cv')">📄 CV</button>
+      <button class="navbtn" onclick="showTab('tracker')" id="tracker-btn">✓ Takip</button>
+      <span id="backend-status" class="status-offline">● Backend Kontrol...</span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ARA -->
+<div id="tab-search">
+  <div class="card">
+    <h2>UK SAP İş Arama</h2>
+    <p class="sub">Gerçek site scraping ile LinkedIn, Indeed UK, Reed'den direkt ilan linkleri.</p>
+
+    <div class="section-label">SAP Modül Uzmanlığın</div>
+    <div class="chips" id="chips-modules"></div>
+
+    <div class="grid2">
+      <div>
+        <div class="section-label">Türkiye Şehirleri</div>
+        <div class="chips" id="chips-lotr"></div>
+      </div>
+      <div>
+        <div class="section-label">UK Şehirleri</div>
+        <div class="chips" id="chips-louk"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <div class="section-label">TR Platformlar</div>
+        <div class="chips" id="chips-pltr"></div>
+      </div>
+      <div>
+        <div class="section-label">UK Platformlar</div>
+        <div class="chips" id="chips-pluk"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Deneyim Seviyesi</div>
+    <select id="sel-exp" style="max-width:240px;margin-bottom:20px;">
+      <option value="all">Tüm Seviyeler</option>
+      <option value="mid">Orta (3-7 yıl)</option>
+      <option value="senior" selected>Kıdemli (7+ yıl)</option>
+    </select>
+
+    <div class="section-label">Filtreler <span style="color:#3a4a6a;font-size:11px;">— 🔥 varsayılan aktif</span></div>
+    <div class="chips" id="chips-filters"></div>
+
+    <div class="section-label" style="margin-top:20px;">Ek Kriter</div>
+    <textarea id="free-text" rows="3" placeholder="Örnek: Renault portal deneyimi, min 70k GBP, lojistik sektör..." style="margin-bottom:20px;resize:vertical;"></textarea>
+
+    <button class="btn-primary" onclick="doSearch()">🔍 Gerçek İlanları Ara</button>
+  </div>
+</div>
+
+<!-- SONUCLAR -->
+<div id="tab-results" class="hidden">
+  <div id="loading-state" class="card" style="text-align:center;padding:56px;">
+    <div class="spinner"></div>
+    <h3 style="margin-top:22px;font-weight:700;">Siteler Taranıyor...</h3>
+    <p class="sub">Gerçek tarayıcı ile LinkedIn, Indeed UK, Reed scraping yapılıyor</p>
+    <div class="logbox" id="logbox"></div>
+  </div>
+  <div id="results-state" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h2 style="margin:0;" id="results-title">İlanlar</h2>
+        <span style="color:#6a7a9a;font-size:13px;" id="results-sub"></span>
+      </div>
+      <button class="btn-ghost" onclick="showTab('search')">⚙ Değiştir</button>
+    </div>
+    <div id="jobs-list"></div>
+  </div>
+  <div id="error-state" class="hidden card" style="text-align:center;padding:56px;">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <p style="color:#6a7a9a;" id="error-msg"></p>
+    <button class="btn-primary" onclick="showTab('search')" style="margin-top:16px;">Aramaya Dön</button>
+  </div>
+</div>
+
+<!-- CV -->
+<div id="tab-cv" class="hidden">
+  <div class="card">
+    <h2>Hazır CV</h2>
+    <p class="sub">UK başvurularında kopyalayıp yapıştır. Visa sponsorship notu ekli.</p>
+    <div style="background:#060d1a;border:1px solid #1a2640;border-radius:12px;overflow:hidden;">
+      <div style="padding:10px 16px;background:#0d1526;border-bottom:1px solid #1a2640;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:#6a7a9a;font-weight:600;">CV — UK Versiyonu</span>
+        <button class="btn-ghost" style="padding:6px 14px;font-size:12px;" onclick="copyCV(this)">📋 Kopyala</button>
+      </div>
+      <pre id="cv-text"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAKIP -->
+<div id="tab-tracker" class="hidden">
+  <div class="card">
+    <h2>Başvuru Takibi</h2>
+    <p class="sub" id="tracker-sub">0 başvuru tamamlandı.</p>
+    <div id="tracker-empty" style="text-align:center;padding:40px;color:#6a7a9a;">
+      <div style="font-size:40px;margin-bottom:12px;">📭</div>
+      <p>Henüz başvurulan ilan yok.</p>
+      <button class="btn-primary" onclick="showTab('results')" style="margin-top:16px;">İlanlara Git</button>
+    </div>
+    <div id="tracker-list" class="hidden"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+const BACKEND = "https://sap-jobbot-production.up.railway.app";
+
+const MODULES = ["SD","MM","PP","FI/CO","EWM","WM","SuccessFactors","ABAP","S/4HANA","HCM","PS","PM","QM","TM","Ariba"];
+const LOTR = ["Istanbul","Ankara","Izmir","Bursa","Remote TR"];
+const LOUK = ["London","Manchester","Birmingham","Edinburgh","Leeds","Remote UK"];
+const PLTR = ["LinkedIn","Kariyer.net","Indeed TR"];
+const PLUK = ["Indeed UK","Reed.co.uk","Totaljobs","CWJobs","LinkedIn UK"];
+const FILTERS = [
+  {l:"Visa Sponsorship",v:"visa sponsorship tier 2",hot:true},
+  {l:"40k+ GBP",v:"minimum 40000 GBP",hot:true},
+  {l:"Remote/Hibrit",v:"remote or hybrid"},
+  {l:"Lojistik/3PL",v:"logistics 3PL supply chain"},
+  {l:"Otomotiv OEM",v:"automotive OEM"},
+  {l:"RISE with SAP",v:"RISE with SAP"},
+  {l:"Contract",v:"contract freelance"},
+  {l:"Big4",v:"Deloitte PwC KPMG Accenture"},
+  {l:"Üretim",v:"manufacturing"},
+  {l:"Relocate Package",v:"relocation package"},
+];
+
+const CV_TEXT = `ALPASLAN [SOYAD]
+SAP Senior Consultant | SD | MM | FI/CO | EWM | SuccessFactors
+Email: alpaslan@email.com | LinkedIn: linkedin.com/in/alpaslan
+Location: Turkey (Open to relocate to UK - visa sponsorship required)
+
+PROFESSIONAL SUMMARY
+SAP consultant with 10+ years of hands-on S/4HANA experience across SD, MM, PP,
+FI/CO, EWM and SuccessFactors. Strong background in Turkish e-government compliance
+(GIB e-Invoice/e-Waybill), ABAP development, and full-cycle S/4HANA implementations
+for major automotive OEM clients. Open to UK relocation with visa sponsorship.
+
+EXPERIENCE
+Izmakpar -- SAP Consultant / IT Manager  (2015 - Present)
+  - Full S/4HANA lifecycle: blueprinting, config, testing, go-live, support
+  - SD, MM, PP, FI/CO module configuration and process optimisation
+  - GIB e-Invoice / e-Waybill integration (Turkish regulatory compliance)
+  - ABAP report development (VBRK, KNA1, TCURR, MSEG)
+  - Fiori app development and Launchpad publishing
+  - EWM warehouse management, SuccessFactors HCM administration
+
+TECHNICAL SKILLS
+  Modules  : SD, MM, PP, FI/CO, EWM, WM, SuccessFactors, PS
+  Technical: ABAP, IDoc, EDIFACT, OData, Fiori/UI5, CDS Views
+  Platforms: SAP S/4HANA, ECC 6.0, RISE with SAP
+  Integr.  : GIB e-Invoice, e-Waybill, TREX
+
+EDUCATION: BSc Metallurgical Engineering
+LANGUAGES: Turkish (native), English (professional)
+VISA: Requires UK Tier 2 / Skilled Worker sponsorship`;
+
+// State
+const state = {
+  modules: ["SD","MM","FI/CO","EWM"],
+  lotr: [],
+  louk: ["London","Remote UK"],
+  pltr: [],
+  pluk: ["Indeed UK","Reed.co.uk","LinkedIn UK"],
+  exp: "senior",
+  filters: ["visa sponsorship tier 2","minimum 40000 GBP"],
+  freeText: "",
+  jobs: [],
+  applied: {},
+  notes: {},
+};
+
+// Init
+document.getElementById("cv-text").textContent = CV_TEXT;
+checkBackend();
+buildChips("chips-modules", MODULES, "modules");
+buildChips("chips-lotr", LOTR, "lotr");
+buildChips("chips-louk", LOUK, "louk");
+buildChips("chips-pltr", PLTR, "pltr");
+buildChips("chips-pluk", PLUK, "pluk");
+buildFilterChips();
+
+function buildChips(id, items, key) {
+  const el = document.getElementById(id);
+  el.innerHTML = items.map(item => `
+    <button class="chip ${state[key].includes(item)?'active':''}" onclick="toggleChip('${key}','${item}',this)">${item}</button>
+  `).join('');
+}
+
+function buildFilterChips() {
+  const el = document.getElementById("chips-filters");
+  el.innerHTML = FILTERS.map(f => `
+    <button class="chip filter ${f.hot?'hot':''} ${state.filters.includes(f.v)?'active':''}"
+      onclick="toggleFilter('${f.v}',this)">${f.hot&&!state.filters.includes(f.v)?'🔥 ':''}${f.l}</button>
+  `).join('');
+}
+
+function toggleChip(key, val, btn) {
+  if (state[key].includes(val)) {
+    state[key] = state[key].filter(x=>x!==val);
+    btn.classList.remove('active');
+  } else {
+    state[key].push(val);
+    btn.classList.add('active');
+  }
+}
+
+function toggleFilter(val, btn) {
+  if (state.filters.includes(val)) {
+    state.filters = state.filters.filter(x=>x!==val);
+    btn.classList.remove('active');
+  } else {
+    state.filters.push(val);
+    btn.classList.add('active');
+  }
+}
+
+function showTab(t) {
+  ['search','results','cv','tracker'].forEach(tab => {
+    document.getElementById('tab-'+tab).classList.toggle('hidden', tab!==t);
+    const btn = document.querySelector(`button[onclick="showTab('${tab}')"]`);
+    if(btn) btn.classList.toggle('active', tab===t);
+  });
+}
+
+async function checkBackend() {
+  try {
+    const r = await fetch(BACKEND+"/health");
+    const d = await r.json();
+    const el = document.getElementById("backend-status");
+    if(d.status==="ok") { el.textContent="● Backend Online"; el.className="status-online"; }
+    else { el.textContent="● Backend Offline"; el.className="status-offline"; }
+  } catch { 
+    document.getElementById("backend-status").textContent="● Backend Offline";
+  }
+}
+
+function log(msg) {
+  const box = document.getElementById("logbox");
+  box.innerHTML += `<div class="logline">${msg}</div>`;
+}
+
+async function doSearch() {
+  showTab('results');
+  document.getElementById("loading-state").classList.remove("hidden");
+  document.getElementById("results-state").classList.add("hidden");
+  document.getElementById("error-state").classList.add("hidden");
+  document.getElementById("logbox").innerHTML = "";
+
+  const allLocs = [...state.lotr, ...state.louk];
+  const allPlats = [...state.pltr, ...state.pluk];
+  const extras = [...state.filters, document.getElementById("free-text").value].filter(Boolean).join("; ");
+
+  log("Backend'e bağlanılıyor...");
+  log("Platformlar: " + (allPlats.length ? allPlats.join(", ") : "Indeed UK, Reed.co.uk, LinkedIn UK"));
+
+  try {
+    const res = await fetch(BACKEND+"/search", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        modules: state.modules,
+        locations: allLocs.length ? allLocs : ["United Kingdom"],
+        platforms: allPlats.length ? allPlats : ["Indeed UK","Reed.co.uk","LinkedIn UK"],
+        experience: document.getElementById("sel-exp").value,
+        extras: extras,
+      })
+    });
+    if(!res.ok) throw new Error("Backend hatası: "+res.status);
+    const data = await res.json();
+    state.jobs = data.jobs || [];
+    if(!state.jobs.length) throw new Error("İlan bulunamadı");
+
+    const direct = state.jobs.filter(j=>j.isDirectUrl).length;
+    log(state.jobs.length+" ilan bulundu — "+direct+" direkt link");
+
+    renderJobs();
+    document.getElementById("loading-state").classList.add("hidden");
+    document.getElementById("results-state").classList.remove("hidden");
+
+    const btn = document.getElementById("results-btn");
+    btn.innerHTML = `📋 İlanlar <span class="badge">${state.jobs.length}</span>`;
+
+  } catch(err) {
+    log("Hata: "+err.message);
+    document.getElementById("loading-state").classList.add("hidden");
+    document.getElementById("error-state").classList.remove("hidden");
+    document.getElementById("error-msg").textContent = err.message;
+  }
+}
+
+function scoreColor(s) { return s>=90?"#00d4aa":s>=80?"#ffd700":"#ff8855"; }
+
+function renderJobs() {
+  const list = document.getElementById("jobs-list");
+  const sponsor = state.jobs.filter(j=>j.sponsorship).length;
+  const direct = state.jobs.filter(j=>j.isDirectUrl).length;
+  document.getElementById("results-title").textContent = state.jobs.length+" Gerçek İlan Bulundu";
+  document.getElementById("results-sub").innerHTML = `<span style="color:#ff8855">🔥</span> ${sponsor} visa sponsorship &nbsp; <span style="color:#00d4aa">●</span> ${direct} direkt URL`;
+
+  list.innerHTML = state.jobs.map(job => {
+    const c = scoreColor(job.matchScore);
+    const bl = job.sponsorship?"#ff8855":job.isDirectUrl?"#00d4aa":"#1a2640";
+    const applied = state.applied[job.id];
+    return `
+    <div class="jcard" style="border-left:3px solid ${bl}">
+      <div style="display:flex;gap:14px;justify-content:space-between;">
+        <div style="flex:1;">
+          <div class="jmeta">
+            ${job.platform} · ${job.posted}
+            ${job.sponsorship?'<span class="dbadge dbadge-red">🔥 VISA SPONSOR</span>':''}
+            ${job.isDirectUrl?'<span class="dbadge dbadge-green">✓ DİREKT</span>':'<span class="dbadge dbadge-orange">⟳ ARAMA</span>'}
+          </div>
+          <div class="jtitle">${job.title}</div>
+          <div class="jco">${job.company}</div>
+          <div class="jinfo">
+            <span>📍 ${job.location}</span>
+            ${job.salary&&job.salary!=="Belirtilmemis"?`<span class="salary">💰 ${job.salary}</span>`:''}
+          </div>
+        </div>
+        <div class="score-box" style="background:${c}18;border:1px solid ${c}44;color:${c};">
+          <div class="score-val">${job.matchScore}%</div>
+          <div class="score-lbl">match</div>
+        </div>
+      </div>
+      <p class="jdesc">${job.description||''}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        ${(job.requirements||[]).slice(0,4).map(r=>`<span class="tag">${r}</span>`).join('')}
+      </div>
+      <input class="note-input" placeholder="Not ekle..." value="${state.notes[job.id]||''}" 
+        onchange="state.notes['${job.id}']=this.value">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="${job.url}" target="_blank" class="btn-primary" 
+          style="background:${job.isDirectUrl?'linear-gradient(135deg,#00d4aa,#00a884)':'linear-gradient(135deg,#f59e0b,#d97706)'};">
+          ${job.isDirectUrl?"Direkt İlana Git →":"Platformda Ara →"}
+        </a>
+        <button class="ap-btn ${applied?'done':''}" onclick="toggleApplied('${job.id}',this)">
+          <span>${applied?"✅":"⬜"}</span> ${applied?"Başvuruldu":"Başvuruldu İşaretle"}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleApplied(id, btn) {
+  state.applied[id] = !state.applied[id];
+  btn.className = "ap-btn" + (state.applied[id]?" done":"");
+  btn.innerHTML = `<span>${state.applied[id]?"✅":"⬜"}</span> ${state.applied[id]?"Başvuruldu":"Başvuruldu İşaretle"}`;
+  updateTracker();
+}
+
+function updateTracker() {
+  const applied = state.jobs.filter(j=>state.applied[j.id]);
+  document.getElementById("tracker-sub").textContent = applied.length+" başvuru tamamlandı.";
+  const btn = document.getElementById("tracker-btn");
+  btn.innerHTML = applied.length>0?`✓ Takip <span class="badge">${applied.length}</span>`:"✓ Takip";
+  if(applied.length===0) {
+    document.getElementById("tracker-empty").classList.remove("hidden");
+    document.getElementById("tracker-list").classList.add("hidden");
+  } else {
+    document.getElementById("tracker-empty").classList.add("hidden");
+    document.getElementById("tracker-list").classList.remove("hidden");
+    document.getElementById("tracker-list").innerHTML = applied.map(j=>`
+      <div style="background:#060d1a;border:1px solid #0e2e22;border-radius:12px;padding:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:3px;">${j.title}</div>
+          <div style="color:#00d4aa;font-size:13px;font-weight:600;margin-bottom:4px;">${j.company} · ${j.location}</div>
+          ${j.sponsorship?'<div style="font-size:11px;color:#ff8855;">🔥 Visa Sponsorship</div>':''}
+          ${state.notes[j.id]?`<div style="color:#6a7a9a;font-size:12px;margin-top:4px;">Not: ${state.notes[j.id]}</div>`:''}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="background:#0e2e22;border:1px solid #00d4aa44;border-radius:8px;color:#00d4aa;padding:5px 12px;font-size:12px;font-weight:600;">✓ Başvuruldu</span>
+          <a href="${j.url}" target="_blank" class="btn-ghost" style="padding:5px 12px;font-size:12px;">İlana Git</a>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function copyCV(btn) {
+  navigator.clipboard.writeText(CV_TEXT).then(()=>{
+    btn.textContent="✓ Kopyalandı!";
+    setTimeout(()=>btn.textContent="📋 Kopyala",2500);
+  });
+}
+</script>
+</body>
+</html>
