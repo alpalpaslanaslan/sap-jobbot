@@ -3,7 +3,8 @@ const cors = require('cors');
 const { chromium } = require('playwright');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "*", methods: ["GET","POST","OPTIONS"], allowedHeaders: ["Content-Type"] }));
+app.options("*", cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
